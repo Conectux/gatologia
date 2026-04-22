@@ -1571,9 +1571,7 @@
         <span class="hero-meta-item">Descarga inmediata</span>
       </div>
 
-      <div class="hero-ctas">
-        <a href="#comprar" class="btn btn-primary btn-huge">Quiero mi guía →</a>
-      </div>
+
     </div>
 
     <div class="hero-visual">
@@ -2298,12 +2296,13 @@
       </div>
 
       <div class="offer-price-row">
-        <div class="offer-price-was">$ 59.000</div>
-        <div class="offer-price-now">$ 29.900</div>
-        <div class="offer-price-save">Ahorras 50%</div>
+        <div class="offer-price-was">$20 USD</div>
+        <div class="offer-price-now">$8 USD</div>
+        <div class="offer-price-save">Ahorras $12 USD (60%)</div>
       </div>
+      <div id="local-price" style="font-size: 16px; color: #888; margin-top: 8px; margin-bottom: 16px; min-height: 20px;"></div>
 
-      <a href="#" class="btn btn-primary btn-huge" style="display: inline-block; font-size: 18px; padding: 24px 64px;">
+      <a href="https://pay.hotmart.com/B105496475Y?checkoutMode=10" class="btn btn-primary btn-huge" style="display: inline-block; font-size: 18px; padding: 24px 64px;" target="_blank">
         Descargar mi guía ahora →
       </a>
 
@@ -2469,6 +2468,49 @@
       item.classList.toggle('open');
     });
   });
+
+  // Conversión de precio según país del visitante
+  (async () => {
+    const USD_PRICE = 8;
+    const USD_OMIT = ['EC', 'PA', 'SV', 'PR', 'US'];   // usan dólar
+    const DEVALUED  = ['AR', 'VE', 'ZW'];               // moneda muy devaluada
+
+    const CURRENCY_MAP = {
+      CO: { code: 'COP', name: 'pesos colombianos', symbol: '$' },
+      PE: { code: 'PEN', name: 'soles', symbol: 'S/' },
+      CL: { code: 'CLP', name: 'pesos chilenos', symbol: '$' },
+      MX: { code: 'MXN', name: 'pesos mexicanos', symbol: '$' },
+      BR: { code: 'BRL', name: 'reales', symbol: 'R$' },
+      BO: { code: 'BOB', name: 'bolivianos', symbol: 'Bs.' },
+      PY: { code: 'PYG', name: 'guaraníes', symbol: '₲' },
+      UY: { code: 'UYU', name: 'pesos uruguayos', symbol: '$' },
+      CR: { code: 'CRC', name: 'colones', symbol: '₡' },
+      GT: { code: 'GTQ', name: 'quetzales', symbol: 'Q' },
+      HN: { code: 'HNL', name: 'lempiras', symbol: 'L' },
+      NI: { code: 'NIO', name: 'córdobas', symbol: 'C$' },
+      DO: { code: 'DOP', name: 'pesos dominicanos', symbol: '$' },
+    };
+
+    try {
+      const geo = await fetch('https://ipapi.co/json/').then(r => r.json());
+      const country = geo.country_code;
+
+      if (USD_OMIT.includes(country) || DEVALUED.includes(country)) return;
+
+      const info = CURRENCY_MAP[country];
+      if (!info) return;
+
+      const rates = await fetch(`https://open.er-api.com/v6/latest/USD`).then(r => r.json());
+      const rate = rates.rates[info.code];
+      if (!rate) return;
+
+      const converted = Math.round(USD_PRICE * rate);
+      const formatted = converted.toLocaleString('es-' + country);
+
+      const el = document.getElementById('local-price');
+      if (el) el.textContent = `Aprox. ${info.symbol}${formatted} ${info.code}`;
+    } catch (_) {}
+  })();
 
   // Fade up animation on scroll
   const observer = new IntersectionObserver((entries) => {
